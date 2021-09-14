@@ -8,9 +8,6 @@ class Wire:
         self.src = src
         self.filename = filename
 
-    def oi(self, x):
-        print(x)
-
     def setThresh(self, src, varFilter, varThresh):
         _, src = cv.threshold(src, varThresh, 255, varFilter)
         return src
