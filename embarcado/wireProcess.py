@@ -5,74 +5,77 @@ import numpy as np
 from typing import List, Union
 
 class Operation:
-	def __init__(self, linesP, cdstP) -> None:
-		self.__linesP = linesP
-		self.__cdstP = cdstP
+	def __init__(self, line_vector : List[float], image_vector : List[float]) -> None:
+		self._line_vector = line_vector
+		self._image_vector = image_vector
 
 	@property
-	def linesP(self) -> List:
-		return self.__linesP
+	def line_vector(self) -> List[float]:
+		return self._line_vector
 
-	@linesP.setter
-	def linesP(self, linesP : List) -> None:
-		self.__linesP = linesP
+	@line_vector.setter
+	def line_vector(self, line_vector : List[float]) -> None:
+		self._line_vector = line_vector
 
 	@property
-	def cdstP(self) -> List:
-		return self.__cdstP
+	def image_vector(self) -> List[float]:
+		return self._image_vector
 
-	@cdstP.setter
-	def cdstP(self, cdstP : List) -> None:
-		self.__cdstP = cdstP
+	@image_vector.setter
+	def image_vector(self, image_vector : List[float]) -> None:
+		self._image_vector = image_vector
 
-	def paralelo(self, linesP : List, cdstP : List) -> Union[List, List]:
-		mediaX0 = 0
-		mediaX1 = 0
-		mediaY0 = 0
-		mediaY1 = 0
-		pontoMediaLX = 0
-		pontoMediaLY = 0
-		mediaDist = 0
-		newLines = []
-		vetDist = []
-		height, width, channels = cdstP.shape
+	def paralelo(self, line_vector : List[float], image_vector : List[float]) -> Union[List, List]:
+		media_x0 : float = 0
+		media_x1 : float = 0
+		media_y0 : float = 0
+		media_y1 : float = 0
+
+		ponto_media_LX : float = 0
+		ponto_media_LY : float = 0
+		media_distancias : float = 0
+
+		linhas_novas : List[float] = []
+		vetor_distancias : List[float] = []
+
+		height, width, channels = image_vector.shape
 		raio = (height + width) // (channels * 2)
 
-		for i in range(len(linesP)):
-			l = linesP[i][0]
-			mediaX0 = mediaX0 + l[0]
-			mediaY0 = mediaY0 + l[1]
-			mediaX1 = mediaX1 + l[2]
-			mediaY1 = mediaY1 + l[3]
+		for i in range(len(line_vector)):
+			l = line_vector[i][0]
+			media_x0 = media_x0 + l[0]
+			media_y0 = media_y0 + l[1]
+			media_x1 = media_x1 + l[2]
+			media_y1 = media_y1 + l[3]
 
-		mediaX0 = mediaX0 // len(linesP)
-		mediaY0 = mediaY0 // len(linesP)
-		mediaX1 = mediaX1 // len(linesP)
-		mediaY1 = mediaY1 // len(linesP)
+		media_x0 = media_x0 // len(line_vector)
+		media_y0 = media_y0 // len(line_vector)
+		media_x1 = media_x1 // len(line_vector)
+		media_y1 = media_y1 // len(line_vector)
 
-		cv.line(cdstP, (mediaX0, mediaY0), (mediaX1, mediaY1), (0,0,255), 3, cv.LINE_AA)
-		pontoMediaY = mediaY0 + ((mediaY1 - mediaY0) / 2)
-		pontoMediaX = mediaX0 + ((mediaX1 - mediaX0) / 2)
+		cv.line(image_vector, (media_x0, media_y0), (media_x1, media_y1), (0,0,255), 3, cv.LINE_AA)
+		ponto_media_Y = media_y0 + ((media_y1 - media_y0) / 2)
+		ponto_media_X = media_x0 + ((media_x1 - media_x0) / 2)
 
-		for i in range(len(linesP)):
-			l = linesP[i][0]
-			pontoMediaLX = l[0] + ((l[2] - l[0]) / 2)
-			pontoMediaLY = l[1] + ((l[3] - l[1]) / 2)
-			dist = math.sqrt((pontoMediaLX - pontoMediaX) **2 + (pontoMediaLY - pontoMediaY) **2)
-			vetDist.append(dist)
-			mediaDist = mediaDist + dist
+		for i in range(len(line_vector)):
+			l = line_vector[i][0]
+			ponto_media_LX = l[0] + ((l[2] - l[0]) / 2)
+			ponto_media_LY = l[1] + ((l[3] - l[1]) / 2)
+			distancia = math.sqrt((ponto_media_LX - ponto_media_X) **2 + (ponto_media_LY - ponto_media_Y) **2)
+			vetor_distancias.append(distancia)
+			media_distancias = media_distancias + distancia
 
-		mediaDist = mediaDist // len(vetDist)
-		#print(f'------------Distâncias----------- \n{vetDist}')
-		for i in range(len(vetDist)):
-			if vetDist[i] > raio:
-				newLines.append(i)
+		media_distancias = media_distancias // len(vetor_distancias)
+		#print(f'------------Distâncias----------- \n{vetor_distancias}')
+		for i in range(len(vetor_distancias)):
+			if vetor_distancias[i] > raio:
+				linhas_novas.append(i)
 
-		linesP = np.delete(linesP, newLines, axis = 0)
-		#print(f'------------Linhas excluídas-----------\n--> {len(newLines)}')
-		center_coordinates = (int(pontoMediaX), int(pontoMediaY))
-		cv.circle(cdstP, center_coordinates, raio, (255, 0, 0), 3)
-		return linesP, cdstP
+		line_vector = np.delete(line_vector, linhas_novas, axis = 0)
+		#print(f'------------Linhas excluídas-----------\n--> {len(linhas_novas)}')
+		center_coordinates = (int(ponto_media_X), int(ponto_media_Y))
+		cv.circle(image_vector, center_coordinates, raio, (255, 0, 0), 3)
+		return line_vector, image_vector
 
 	def intersect(self, Ax1 : float, Ay1 : float, Ax2 : float, Ay2 : float, Bx1 : float, By1 : float, Bx2 : float, By2 : float) -> bool:
 		d = (By2 - By1) * (Ax2 - Ax1) - (Bx2 - Bx1) * (Ay2 - Ay1)    
@@ -87,157 +90,157 @@ class Operation:
 		y = Ay1 + uA * (Ay2 - Ay1)
 		return True
 
-	def inside(self, p0 : List, p1 : List, lines : List, cdstP : List) -> List:
+	def inside(self, ponto_0 : List, ponto_1 : List, lines : List, image_vector : List) -> List:
 		flag = 0
-		vetConf = []
+		vetor_conflitos = []
         
-		if p0[0] > p1[0]:
-			maxX = p0[0]
-			minX = p1[0]
+		if ponto_0[0] > ponto_1[0]:
+			x_maximo = ponto_0[0]
+			x_minimo = ponto_1[0]
 		else:
-			maxX = p1[0]
-			minX = p0[0]
-		if p0[1] > p1[1]:
-			maxY = p0[1]
-			minY = p1[1]
+			x_maximo = ponto_1[0]
+			x_minimo = ponto_0[0]
+		if ponto_0[1] > ponto_1[1]:
+			y_maximo = ponto_0[1]
+			y_minimo = ponto_1[1]
 		else:
-			maxY = p1[1]
-			minY = p0[1]
+			y_maximo = ponto_1[1]
+			y_minimo = ponto_0[1]
         
 		for i in range(len(lines)):
 			line = lines[i][0]
 			if line[0] > line[2]:
-				lineX = line[0]
-				lineY = line[1]
+				linha_x = line[0]
+				linha_y = line[1]
 			else:
-				lineX = line[2]
-				lineY = line[3]
+				linha_x = line[2]
+				linha_y = line[3]
             
-			if (lineX >= minX) and (lineX <= maxX):
-				if (lineY >= minY) and (lineY <= maxY):
+			if (linha_x >= x_minimo) and (linha_x <= x_maximo):
+				if (linha_y >= y_minimo) and (linha_y <= y_maximo):
 					flag += 1
-					vetConf.append(line)
-					cv.line(cdstP, (line[0], line[1]), (line[2], line[3]), (0,0,255), 3, cv.LINE_AA)
+					vetor_conflitos.append(line)
+					cv.line(image_vector, (line[0], line[1]), (line[2], line[3]), (0,0,255), 3, cv.LINE_AA)
                     
 		for i in range(len(lines)):
 			line = lines[i][0]
 			if line[0] < line[2]:
-				lineX = line[0]
-				lineY = line[1]
+				linha_x = line[0]
+				linha_y = line[1]
 			else:
-				lineX = line[2]
-				lineY = line[3]
+				linha_x = line[2]
+				linha_y = line[3]
             
-			if (lineX >= minX) and (lineX <= maxX):
-				if (lineY >= minY) and (lineY <= maxY):
+			if (linha_x >= x_minimo) and (linha_x <= x_maximo):
+				if (linha_y >= y_minimo) and (linha_y <= y_maximo):
 					flag += 1
-					vetConf.append(line)
-					cv.line(cdstP, (line[0], line[1]), (line[2], line[3]), (0,0,255), 3, cv.LINE_AA)
+					vetor_conflitos.append(line)
+					cv.line(image_vector, (line[0], line[1]), (line[2], line[3]), (0,0,255), 3, cv.LINE_AA)
         
-		return vetConf
+		return vetor_conflitos
 
-	def wireCheck(self, p0 : List, p1 : List, lines : List, cdstP : List) -> List:
-		flagP = 0
-		vetConf = []
+	def wireCheck(self, ponto_0 : List[float], ponto_1 : List[float], lines : List[float], image_vector : List[float]) -> List[float]:
+		flag_intersect = 0
+		vetor_conflitos = []
         
-		if p0[0] > p1[0]:
-			maxX = p0[0]
-			minX = p1[0]
+		if ponto_0[0] > ponto_1[0]:
+			x_maximo = ponto_0[0]
+			x_minimo = ponto_1[0]
 		else:
-			maxX = p1[0]
-			minX = p0[0]
-		if p0[1] > p1[1]:
-			maxY = p0[1]
-			minY = p1[1]
+			x_maximo = ponto_1[0]
+			x_minimo = ponto_0[0]
+		if ponto_0[1] > ponto_1[1]:
+			y_maximo = ponto_0[1]
+			y_minimo = ponto_1[1]
 		else:
-			maxY = p1[1]
-			minY = p0[1]
+			y_maximo = ponto_1[1]
+			y_minimo = ponto_0[1]
             
 		if lines is None:
-			return cdstP
+			return image_vector
 		if len(lines) != 0:
 			#print(f'-----------Quantidade de fios-----------\n--> {len(lines)}')
 			for i in range(len(lines)):
 				line = lines[i][0]
-				boolflag = self.intersect(line[0], line[1], line[2], line[3], maxX, maxY, maxX, minY)
-				if boolflag:
-					flagP += 1
-					cv.line(cdstP, (line[0], line[1]), (line[2], line[3]), (0,0,255), 3, cv.LINE_AA)
-					vetConf.append(line)
+				bool_flag = self.intersect(line[0], line[1], line[2], line[3], x_maximo, y_maximo, x_maximo, y_minimo)
+				if bool_flag:
+					flag_intersect += 1
+					cv.line(image_vector, (line[0], line[1]), (line[2], line[3]), (0,0,255), 3, cv.LINE_AA)
+					vetor_conflitos.append(line)
 					continue
                     
-				boolflag = self.intersect(line[0], line[1], line[2], line[3], minX, minY, minX, maxY)
-				if boolflag:
-					cv.line(cdstP, (line[0], line[1]), (line[2], line[3]), (0,0,255), 3, cv.LINE_AA)
-					flagP += 1
-					vetConf.append(line)
+				bool_flag = self.intersect(line[0], line[1], line[2], line[3], x_minimo, y_minimo, x_minimo, y_maximo)
+				if bool_flag:
+					cv.line(image_vector, (line[0], line[1]), (line[2], line[3]), (0,0,255), 3, cv.LINE_AA)
+					flag_intersect += 1
+					vetor_conflitos.append(line)
 					continue
                     
-				boolflag = self.intersect(line[0], line[1], line[2], line[3], minX, maxY, maxX, maxY)
-				if boolflag:
-					cv.line(cdstP, (line[0], line[1]), (line[2], line[3]), (0,0,255), 3, cv.LINE_AA)
-					flagP += 1
-					vetConf.append(line)
+				bool_flag = self.intersect(line[0], line[1], line[2], line[3], x_minimo, y_maximo, x_maximo, y_maximo)
+				if bool_flag:
+					cv.line(image_vector, (line[0], line[1]), (line[2], line[3]), (0,0,255), 3, cv.LINE_AA)
+					flag_intersect += 1
+					vetor_conflitos.append(line)
 					continue
-				boolflag = self.intersect(line[0], line[1], line[2], line[3], minX, minY, maxX, minY)
-				if boolflag:
-					cv.line(cdstP, (line[0], line[1]), (line[2], line[3]), (0,0,255), 3, cv.LINE_AA)
-					flagP += 1
-					vetConf.append(line)
+				bool_flag = self.intersect(line[0], line[1], line[2], line[3], x_minimo, y_minimo, x_maximo, y_minimo)
+				if bool_flag:
+					cv.line(image_vector, (line[0], line[1]), (line[2], line[3]), (0,0,255), 3, cv.LINE_AA)
+					flag_intersect += 1
+					vetor_conflitos.append(line)
                     
-			vetInside = self.inside(p0, p1, lines, cdstP)
-			vetConf = vetConf + vetInside
+			vetor_inside = self.inside(ponto_0, ponto_1, lines, image_vector)
+			vetor_conflitos = vetor_conflitos + vetor_inside
 				
-			#print(f'----------------------- {len(vetConf)} Interseções -----------------------')
-			#for i in range(len(vetConf)):
-			#	print(f'Fio {vetConf[i]} pode estar em contato com alguma árvore')
+			#print(f'----------------------- {len(vetor_conflitos)} Interseções -----------------------')
+			#for i in range(len(vetor_conflitos)):
+			#	print(f'Fio {vetor_conflitos[i]} pode estar em contato com alguma árvore')
 
-		return cdstP
+		return image_vector
 
 	'''	    
-	def angleCheck(self, linesP : List) -> List:
-		slope = []
-		media = 0
-		newLines = []	
+	def angleCheck(self, line_vector : List) -> List:
+		inclinacao : List[float]= []
+		media : float= 0
+		linhas_novas : List[float]= []	
 
-		for i in range(len(linesP)):
-			l = linesP[i][0]	
+		for i in range(len(line_vector)):
+			l = line_vector[i][0]	
 			m = (l[3] - l[1]) / (l[2] - l[0])
 			m = math.degrees(math.atan(m))
 			media = media + m
-			slope.append(m)
+			inclinacao.append(m)
 			print(f'angulo da reta[{str(i)}] = {m}')
 		if media != 0:
-			media = media / len(linesP)
+			media = media / len(line_vector)
 		else:
 			media = 0
         
-		x = len(slope)
+		x = len(inclinacao)
 		for i in range(x):
 			if i >= x:
 				break
                 
 			if media > 0:
-				if (slope[i] > media * 2) or (slope[i] < (media / 2)):
-					slope.pop(i)
+				if (inclinacao[i] > media * 2) or (inclinacao[i] < (media / 2)):
+					inclinacao.pop(i)
 					x = x - 1
 			else:
-				if (slope[i] < media * 2) or abs(slope[i]) < abs(media) - (abs(media) * 2):
-					slope.pop(i)
+				if (inclinacao[i] < media * 2) or abs(inclinacao[i]) < abs(media) - (abs(media) * 2):
+					inclinacao.pop(i)
 					x = x - 1
             
 		media = 0
-		for i in range(len(slope)):
-			media = media + slope[i]
+		for i in range(len(inclinacao)):
+			media = media + inclinacao[i]
 		if media != 0:
-			media = media / len(slope)
+			media = media / len(inclinacao)
 		else:
 			media = 0
 		print(f'-----------------Média------------------\n--> {media}')
-		if slope == []:
-			return linesP
+		if inclinacao == []:
+			return line_vector
         
-		delta = max(slope) - min(slope)
+		delta = max(inclinacao) - min(inclinacao)
 
 		if (delta >= 50) and (delta < 70):
 			media = media * 1.5
@@ -245,13 +248,13 @@ class Operation:
 			media = media * 2
         
 		if abs(media) > 20:
-			opx = 1.5
+			operador_multiplicacao = 1.5
 		else:
-			opx = 2
+			operador_multiplicacao = 2
         
 		print('------------Angulos excluídos-----------')
-		for i in range(len(linesP)):
-			l = linesP[i][0]
+		for i in range(len(line_vector)):
+			l = line_vector[i][0]
 			m = (l[3] - l[1]) / (l[2] - l[0])
 			m = math.degrees(math.atan(m))
 
@@ -262,191 +265,191 @@ class Operation:
 				if abs(m) - abs(media) < 10:
 					continue
 			if media > 0:
-				if (m > media * opx) or (m < media / 2):
-					print(f'{m} > {media * opx}')
-					newLines.append(i)
+				if (m > media * operador_multiplicacao) or (m < media / 2):
+					print(f'{m} > {media * operador_multiplicacao}')
+					linhas_novas.append(i)
 			else:
-				if (m < media * opx) or (m > media / 2):
-					print(f'{m} < {media * opx}')
-					newLines.append(i)
+				if (m < media * operador_multiplicacao) or (m > media / 2):
+					print(f'{m} < {media * operador_multiplicacao}')
+					linhas_novas.append(i)
             
-		linesP = np.delete(linesP, newLines, axis = 0)
-		return linesP
+		line_vector = np.delete(line_vector, linhas_novas, axis = 0)
+		return line_vector
 	'''
 
 
 class Wire:
-	def __init__(self, path, src, box) -> None:
-		self.path = path
-		self.src = src
-		self.box = box
+	def __init__(self, caminho_imagem : str, imagem_fonte : str, box : List[float]) -> None:
+		self.caminho_imagem : str = caminho_imagem
+		self.imagem_fonte : str = imagem_fonte
+		self.box : List[float ]= box
 
-	def setThresh(self, src : List, varFilter : int, varThresh : int) -> List:
-		_, src = cv.threshold(src, varThresh, 255, varFilter)
-		return src
+	def setThresh(self, imagem_fonte : str, varFilter : int, varThresh : int) -> List[float]:
+		_, imagem_fonte = cv.threshold(imagem_fonte, varThresh, 255, varFilter)
+		return imagem_fonte
 
-	def setMorph(self, src : List, varKernel : int) -> List:
+	def setMorph(self, imagem_fonte : str, varKernel : int) -> List[float]:
 		#Pode ser ELLIPSE ou CROSS ao invés de RECT
 		kernel = cv.getStructuringElement(cv.MORPH_RECT,(varKernel, varKernel))
-		src = cv.morphologyEx(src, cv.MORPH_OPEN, kernel)
-		return src
+		imagem_fonte = cv.morphologyEx(imagem_fonte, cv.MORPH_OPEN, kernel)
+		return imagem_fonte
 
-	def setFilter(self, src : List) -> List:
-		src = cv.bilateralFilter(src, 7, 130, 75)
-		src = cv.Canny(src, 50, 200, None, 3)
-		return src
+	def setFilter(self, imagem_fonte : List) -> List:
+		imagem_fonte = cv.bilateralFilter(imagem_fonte, 7, 130, 75)
+		imagem_fonte = cv.Canny(imagem_fonte, 50, 200, None, 3)
+		return imagem_fonte
 
-	def probHough(self, src : List, varTeta : int, varMinlength : int, varMaxgap : int) -> Union[List, List]:
-		cdstP = cv.cvtColor(src, cv.COLOR_GRAY2BGR)
-		linesP = []
-		linesP = cv.HoughLinesP(src, 1,  (np.pi / 180), varTeta, None, varMinlength, varMaxgap) 
-		return linesP, cdstP
+	def probHough(self, imagem_fonte : List, varTeta : int, varMinlength : int, varMaxgap : int) -> Union[List, List]:
+		image_vector = cv.cvtColor(imagem_fonte, cv.COLOR_GRAY2BGR)
+		line_vector = []
+		line_vector = cv.Houghline_vector(imagem_fonte, 1,  (np.pi / 180), varTeta, None, varMinlength, varMaxgap) 
+		return line_vector, image_vector
 
-	def save(self, src : List, path : str) -> None:
-		path = path.split('.')
-		path[3] = 'linhas'
-		path = path[0] + '.' + path[1] + '.' + path[2] + '.' + path[3] + '.' + path[4]
-		cv.imwrite("/mnt/SSD/Source/main/processData/src/img_to_merge/" + path, src)
+	def save(self, imagem_fonte : List, caminho_imagem : str) -> None:
+		caminho_imagem = caminho_imagem.split('.')
+		caminho_imagem[3] = 'linhas'
+		caminho_imagem = caminho_imagem[0] + '.' + caminho_imagem[1] + '.' + caminho_imagem[2] + '.' + caminho_imagem[3] + '.' + caminho_imagem[4]
+		cv.imwrite("/mnt/SSD/Source/main/processData/src/img_to_merge/" + caminho_imagem, imagem_fonte)
 
-def wireFunc(src, path : List, box : List) -> bool:
+def wireFunc(imagem_fonte : List[float], caminho_imagem : str, box : List[float]) -> bool:
 	try:
-		cv.imwrite("/mnt/SSD/Source/main/processData/src/img_to_merge/" + path, src)
+		cv.imwrite("/mnt/SSD/Source/main/processData/src/img_to_merge/" + caminho_imagem, imagem_fonte)
 	except Exception as e:
 		print(f"Exceção: {str(e)}")
-	linesP = []
-	varSize = []  
-	newWire = Wire(path, src, box)
+	line_vector : List[float] = []
+	vetor_quantidade_fios : List[int] = []  
+	newWire : Union[Wire] = Wire(caminho_imagem, imagem_fonte, box)
 	#----------------------------------------------------------
-	src1 = newWire.setThresh(src, 3, 240)
-	src1 = newWire.setMorph(src1, 5)
-	src1 = newWire.setFilter(src1)
-	linesP, cdstP = newWire.probHough(src1, 80, 20, 10)
-	if linesP is not None:
-		varSize.append(len(linesP))
+	imagem_fonte1 = newWire.setThresh(imagem_fonte, 3, 240)
+	imagem_fonte1 = newWire.setMorph(imagem_fonte1, 5)
+	imagem_fonte1 = newWire.setFilter(imagem_fonte1)
+	line_vector, image_vector = newWire.probHough(imagem_fonte1, 80, 20, 10)
+	if line_vector is not None:
+		vetor_quantidade_fios.append(len(line_vector))
 	else:
-		varSize.append(0)
+		vetor_quantidade_fios.append(0)
     #----------------------------------------------------------
-	src2 = newWire.setThresh(src, 3, 200)
-	src2 = newWire.setMorph(src2, 7)
-	src2 = newWire.setFilter(src2)
-	linesP2, cdstP2 = newWire.probHough(src2, 50, 20, 10)
-	if linesP2 is not None:
-		varSize.append(len(linesP2))
+	imagem_fonte2 = newWire.setThresh(imagem_fonte, 3, 200)
+	imagem_fonte2 = newWire.setMorph(imagem_fonte2, 7)
+	imagem_fonte2 = newWire.setFilter(imagem_fonte2)
+	line_vector2, image_vector2 = newWire.probHough(imagem_fonte2, 50, 20, 10)
+	if line_vector2 is not None:
+		vetor_quantidade_fios.append(len(line_vector2))
 	else:
-		varSize.append(0)
+		vetor_quantidade_fios.append(0)
 	#----------------------------------------------------------
-	src3 = newWire.setThresh(src, 3, 250)
-	src3 = newWire.setMorph(src3, 7)
-	src3 = newWire.setFilter(src3)
-	linesP3, cdstP3 = newWire.probHough(src3, 50, 20, 10)
-	if linesP3 is not None:
-		varSize.append(len(linesP3))
+	imagem_fonte3 = newWire.setThresh(imagem_fonte, 3, 250)
+	imagem_fonte3 = newWire.setMorph(imagem_fonte3, 7)
+	imagem_fonte3 = newWire.setFilter(imagem_fonte3)
+	line_vector3, image_vector3 = newWire.probHough(imagem_fonte3, 50, 20, 10)
+	if line_vector3 is not None:
+		vetor_quantidade_fios.append(len(line_vector3))
 	else:
-		varSize.append(0)
+		vetor_quantidade_fios.append(0)
     #----------------------------------------------------------
-	src4 = newWire.setThresh(src, 3, 205)
-	src4 = newWire.setMorph(src4, 7)
-	src4 = newWire.setFilter(src4)
-	linesP4, cdstP4 = newWire.probHough(src4, 80, 20, 10)
-	if linesP4 is not None:
-		varSize.append(len(linesP4))
+	imagem_fonte4 = newWire.setThresh(imagem_fonte, 3, 205)
+	imagem_fonte4 = newWire.setMorph(imagem_fonte4, 7)
+	imagem_fonte4 = newWire.setFilter(imagem_fonte4)
+	line_vector4, image_vector4 = newWire.probHough(imagem_fonte4, 80, 20, 10)
+	if line_vector4 is not None:
+		vetor_quantidade_fios.append(len(line_vector4))
 	else:
-		varSize.append(0)
+		vetor_quantidade_fios.append(0)
     #----------------------------------------------------------
-	src5 = newWire.setThresh(src, 3, 205)
-	src5 = newWire.setMorph(src5, 5)
-	src5 = newWire.setFilter(src5)
-	linesP5, cdstP5 = newWire.probHough(src5, 80, 20, 10)
-	if linesP5 is not None:
-		varSize.append(len(linesP5))
+	imagem_fonte5 = newWire.setThresh(imagem_fonte, 3, 205)
+	imagem_fonte5 = newWire.setMorph(imagem_fonte5, 5)
+	imagem_fonte5 = newWire.setFilter(imagem_fonte5)
+	line_vector5, image_vector5 = newWire.probHough(imagem_fonte5, 80, 20, 10)
+	if line_vector5 is not None:
+		vetor_quantidade_fios.append(len(line_vector5))
 	else:
-		varSize.append(0)
+		vetor_quantidade_fios.append(0)
 	#----------------------------------------------------------
-	'''src4 = newWire.setThresh(src, 0, 140)
-	src4 = newWire.setMorph(src4, 7)
-	src4 = newWire.setFilter(src4)
-	linesP4, cdstP4 = newWire.probHough(src4, 80, 20, 10)
-	if linesP4 is not None:
-		varSize.append(len(linesP4))
+	'''imagem_fonte4 = newWire.setThresh(imagem_fonte, 0, 140)
+	imagem_fonte4 = newWire.setMorph(imagem_fonte4, 7)
+	imagem_fonte4 = newWire.setFilter(imagem_fonte4)
+	line_vector4, image_vector4 = newWire.probHough(imagem_fonte4, 80, 20, 10)
+	if line_vector4 is not None:
+		vetor_quantidade_fios.append(len(line_vector4))
 	else:
-		varSize.append(0)'''
+		vetor_quantidade_fios.append(0)'''
     #----------------------------------------------------------
-	'''src5 = newWire.setThresh(src, 0, 120)
-	src5 = newWire.setMorph(src5, 7)
-	src5 = newWire.setFilter(src5)
-	linesP5, cdstP5 = newWire.probHough(src5, 50, 20, 10)
-	if linesP5 is not None:
-		varSize.append(len(linesP5))
+	'''imagem_fonte5 = newWire.setThresh(imagem_fonte, 0, 120)
+	imagem_fonte5 = newWire.setMorph(imagem_fonte5, 7)
+	imagem_fonte5 = newWire.setFilter(imagem_fonte5)
+	line_vector5, image_vector5 = newWire.probHough(imagem_fonte5, 50, 20, 10)
+	if line_vector5 is not None:
+		vetor_quantidade_fios.append(len(line_vector5))
 	else:
-		varSize.append(0)'''
+		vetor_quantidade_fios.append(0)'''
     #----------------------------------------------------------
 	flag = 0
-	newOperation = Operation(linesP, cdstP)
-	for i in range(len(varSize)):
-		if varSize[i] > 1:
+	newOperation : Union[Operation] = Operation(line_vector, image_vector)
+	for i in range(len(vetor_quantidade_fios)):
+		if vetor_quantidade_fios[i] > 1:
 			flag = i
 	if flag == 1:
-		newOperation.linesP = linesP2
-		newOperation.cdstP = cdstP2
+		newOperation.line_vector = line_vector2
+		newOperation.image_vector = image_vector2
 	elif flag == 2:
-		newOperation.linesP = linesP3
-		newOperation.cdstP = cdstP3
+		newOperation.line_vector = line_vector3
+		newOperation.image_vector = image_vector3
 	elif flag == 3:
-		newOperation.linesP = linesP4
-		newOperation.cdstP = cdstP4
+		newOperation.line_vector = line_vector4
+		newOperation.image_vector = image_vector4
 	elif flag == 4:
-		newOperation.linesP = linesP5
-		newOperation.cdstP = cdstP5
+		newOperation.line_vector = line_vector5
+		newOperation.image_vector = image_vector5
 
     #----------------------------------------------------------
-	xmin = 0
-	xmax = int(box[0][2])
-	ymin = 0
-	ymax = int(box[0][3])
+	x_minimo : int = 0
+	x_maximo : int = int(box[0][2])
+	y_minimo : int = 0
+	y_maximo : int = int(box[0][3])
 
-	p0 = (abs(xmin), abs(ymin))
-	p1 = (abs(xmax), abs(ymax))
+	ponto_0 = (abs(x_minimo), abs(y_minimo))
+	ponto_1 = (abs(x_maximo), abs(y_maximo))
 
-	cv.rectangle(src, p0, p1, (0, 255, 0), 2)
+	cv.rectangle(imagem_fonte, ponto_0, ponto_1, (0, 255, 0), 2)
 	flag = False
 
-	if newOperation.linesP is not None:
-		newOperation.linesP, newOperation.cdstP = newOperation.paralelo(newOperation.linesP, newOperation.cdstP)
+	if newOperation.line_vector is not None:
+		newOperation.line_vector, newOperation.image_vector = newOperation.paralelo(newOperation.line_vector, newOperation.image_vector)
 
-	if newOperation.linesP is not None:
-		for i in range(0, len(newOperation.linesP)):
-			l = newOperation.linesP[i][0]
-			cv.line(src, (l[0], l[1]), (l[2], l[3]), (0,255,255), 3, cv.LINE_AA)
+	if newOperation.line_vector is not None:
+		for i in range(0, len(newOperation.line_vector)):
+			l = newOperation.line_vector[i][0]
+			cv.line(imagem_fonte, (l[0], l[1]), (l[2], l[3]), (0,255,255), 3, cv.LINE_AA)
 		flag = True
 
-	#if newOperation.linesP is not None:
-	#	newOperation.linesP = newOperation.angleCheck(newOperation.linesP)	
+	#if newOperation.line_vector is not None:
+	#	newOperation.line_vector = newOperation.angleCheck(newOperation.line_vector)	
 
-	#if newOperation.linesP is not None:
-	#	src, flag = newOperation.wireCheck(p0, p1, newOperation.linesP, src)
-	newWire.save(src, path)
+	#if newOperation.line_vector is not None:
+	#	imagem_fonte, flag = newOperation.wireCheck(ponto_0, ponto_1, newOperation.line_vector, imagem_fonte)
+	newWire.save(imagem_fonte, caminho_imagem)
 	return flag
 
 def wireDetector(data, box : List) -> bool:
-	images = []
+	images : List[float] = []
 	images.append(cv.imread(data['camera'][0]))
 
-	xmin = abs(int(box[0][0] - (box[0][2] / 2)))
-	xmax = abs(int(box[0][0] + (box[0][2] / 2)))
-	ymin = abs(int(box[0][1] - (box[0][3] / 2)))
-	ymax = abs(int(box[0][1] + (box[0][3] / 2)))
+	x_minimo = abs(int(box[0][0] - (box[0][2] / 2)))
+	x_maximo = abs(int(box[0][0] + (box[0][2] / 2)))
+	y_minimo = abs(int(box[0][1] - (box[0][3] / 2)))
+	y_maximo = abs(int(box[0][1] + (box[0][3] / 2)))
 
-	images[0] = images[0][ymin:ymax, xmin:xmax].copy()
+	images[0] = images[0][y_minimo : y_maximo, x_minimo:x_maximo].copy()
 
-	paths = [data['camera'][0], data['camera'][0]]
-	src = images[0]
-	path = paths[0].split('/')[-1]
+	caminho_imagems = [data['camera'][0], data['camera'][0]]
+	imagem_fonte = images[0]
+	caminho_imagem = caminho_imagems[0].split('/')[-1]
 
-	flag0 = wireFunc(src, path, box)
+	flag0 = wireFunc(imagem_fonte, caminho_imagem, box)
 	return flag0
 
 if __name__ == "__main__":
-	path = '/home/ubuntu/Documentos/hdr_test/Capturas/camera/'
-	filename = '2021-06-11.10:16:43.804897_0.webcam.jpg'
-	src = cv.imread(cv.samples.findFile(path + filename))
-	wireDetector(path, src, filename)
+	caminho_imagem : str = '/home/ubuntu/Documentos/hdr_test/Capturas/camera/'
+	filename : str = '2021-06-11.10:16:43.804897_0.webcam.jpg'
+	imagem_fonte : List[float] = cv.imread(cv.samples.findFile(caminho_imagem + filename))
+	wireDetector(caminho_imagem, imagem_fonte, filename)
